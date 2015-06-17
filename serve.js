@@ -20,7 +20,7 @@ server.use(function(req, res, next){
   next();
 });
 
-var CATALOG_SERVICE_FULL_URL = process.env.CATALOG_SERVICE_URL;
+var CATALOG_SERVICE_FULL_URL = process.env.CATALOG_SERVICE_URL + '/products/_all_docs?include_docs=true';
 var RETRY_TIMEOUT =  parseInt(process.env.RETRY_TIMEOUT) || 2000;
 var CART_TIMEOUT = parseInt(process.env.CART_TIMEOUT) || 60000;
 
@@ -47,15 +47,12 @@ server.get('/cart/:key?', function(req, res){
   cart.total = 0;
   cart.datetime = new Date();
   
-
-
   cart.orders = cart.orders.map(function(itm){
     
-    var catalogItem = _.find(catalogItems, {id: parseInt(itm.id)});
+    var catalogItem = _.find(catalogItems, {id: itm.id});
     _.assign(itm, catalogItem);
 
-    itm.price = parseFloat(itm.price);
-    itm.tax = parseInt(itm.tax);
+    itm.price = parseFloat(itm.price);    
 
     return itm;
   });
@@ -65,15 +62,18 @@ server.get('/cart/:key?', function(req, res){
     if(!cart.orders) cart.orders = {};
     if(!cart.orders[itm.id]) cart.orders[itm.id] = {
       id: Infinity,
-      name: '',
+      mbid: '',
+      artist: '',
+      title: '',
       amount: 0,
       price: 0,
-      tax: 0
+      total: 0     
     };
 
     cart.orders[itm.id].id = itm.id;
-    cart.orders[itm.id].name = itm.name;
-    cart.orders[itm.id].tax = itm.tax;
+    cart.orders[itm.id].mbid = itm.mbid;
+    cart.orders[itm.id].artist = itm.artist;
+    cart.orders[itm.id].title = itm.title;
 
     cart.orders[itm.id].amount = itm.removed ?  cart.orders[itm.id].amount - 1 :  cart.orders[itm.id].amount + 1;
     if(cart.orders[itm.id].amount < 0) cart.orders[itm.id].amount = 0;
@@ -133,9 +133,14 @@ function replicate(path, success, failed){
     .timeout(2000)
     .q()
     .then(function(result){
-      catalogItems = result.body || [];
-      console.log(result.body.length + ' items replicated');
-      console.log(result.body);
+      catalogItems = result.body.rows.map(function(itm){
+        itm.doc.id = itm.doc._id;
+        delete itm.doc._id;
+        delete itm.doc._rev;
+        return itm.doc;
+      }) || [];
+      console.log(result.body.rows.length + ' items replicated');
+      console.log(catalogItems);
       return result;
     })
     .then(success)

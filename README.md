@@ -6,7 +6,7 @@
 export SERVICE_PORT=5008
 export CART_TIMEOUT=60000
 export RETRY_TIMEOUT=5000
-export CATALOG_SERVICE_URL=http://46.101.191.124:5005/products
+export CATALOG_SERVICE_URL=http://46.101.191.124:5984
 ```
 
 ##Build
@@ -20,8 +20,8 @@ export CATALOG_SERVICE_URL=http://46.101.191.124:5005/products
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.2
-docker push 46.101.191.124:5000/cart-service:0.0.2
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.3
+docker push 46.101.191.124:5000/cart-service:0.0.3
 ```
 
 ##Deploy via Shipyard
@@ -32,12 +32,12 @@ curl -X POST \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.2",
+  "name":"46.101.191.124:5000/cart-service:0.0.3",
   "cpus":0.1,
   "memory":64,
   "environment":{
     "SERVICE_CHECK_SCRIPT":"curl -s http://46.101.191.124:5008/healthcheck",
-    "CATALOG_SERVICE_URL":"http://46.101.191.124:5005/products",
+    "CATALOG_SERVICE_URL":"http://46.101.191.124:5984",
     "SERVICE_PORT":"5008",
     "CART_TIMEOUT":"3600000",
     "RETRY_TIMEOUT":"5000"
@@ -85,10 +85,10 @@ curl -X POST \
 http://localhost:5008/cart/mycart1 \
 -d '
   [{
-    "id": "1"
+    "id": "725dfb991d1f699103311e2b0e07280c"
   },
   {
-    "id": "2"
+    "id": "725dfb991d1f699103311e2b0e073703"
   }]
 '
 ```

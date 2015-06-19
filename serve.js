@@ -1,6 +1,7 @@
 'use strict';
 
 var express         = require('express');
+var app             = require('./package.json');
 var bodyParser      = require('body-parser');
 var uuid            = require('node-uuid');
 var cache           = require('memory-cache');
@@ -34,7 +35,7 @@ var catalogServiceBreaker = new CircuitBreaker({
 retryReplicate(CATALOG_SERVICE_FULL_URL);
 
 server.get('/healthcheck', function(req, res){
-  res.send({ message: 'OK'});
+  res.send({ message: 'OK', version: app.version});
 });
 
 server.get('/cart/:key?', function(req, res){
@@ -119,6 +120,11 @@ server.get('/replicate', function(req, res){
   catalogServiceBreaker.run(command, function() {    
     res.send({ message: 'Replication error' });
   });
+});
+
+server.get('/error', function(req, res){
+  console.log(new Error('Error - shut down'));
+  process.exit(-1);
 });
 
 server.listen(process.env.SERVICE_PORT, function(){

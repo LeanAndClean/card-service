@@ -7,7 +7,7 @@ var uuid            = require('node-uuid');
 var cache           = require('memory-cache');
 var CircuitBreaker  = require('circuit-breaker-js');
 var _               = require('lodash');
-var serviceSDK      = require('./lc-sdk-node');
+var serviceSDK      = require('lc-sdk-node.js');
 
 var DISCOVERY_SERVICE_URLS = (process.env.DISCOVERY_SERVICE_URLS || '').split(/\s*;\s*|\s*,\s*/);
 var RETRY_TIMEOUT =  parseInt(process.env.RETRY_TIMEOUT) || 2000;

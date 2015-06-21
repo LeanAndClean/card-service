@@ -20,8 +20,8 @@ export DISCOVERY_SERVICE_URLS=http://46.101.138.192:8500;http://46.101.191.124:8
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.5
-docker push 46.101.191.124:5000/cart-service:0.0.5
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.6
+docker push 46.101.191.124:5000/cart-service:0.0.6
 ```
 
 ##Deploy via Shipyard
@@ -33,7 +33,7 @@ curl -X POST \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.5",
+  "name":"46.101.191.124:5000/cart-service:0.0.6",
   "cpus":0.1,
   "memory":64,
   "environment":{
@@ -77,7 +77,7 @@ $Headers = @{
 
 $Body = @"
 {  
-  "name":"46.101.191.124:5000/cart-service:0.0.5",
+  "name":"46.101.191.124:5000/cart-service:0.0.6",
   "cpus":0.1,
   "memory":64,
   "environment":{

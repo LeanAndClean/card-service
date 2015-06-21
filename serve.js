@@ -6,11 +6,14 @@ var bodyParser      = require('body-parser');
 var uuid            = require('node-uuid');
 var cache           = require('memory-cache');
 var CircuitBreaker  = require('circuit-breaker-js');
-var q               = require('q');
-var request         = require('superagent');
 var _               = require('lodash');
+var serviceSDK      = require('./lc-sdk-node');
 
-require('q-superagent')(request);
+var DISCOVERY_SERVICE_URLS = (process.env.DISCOVERY_SERVICE_URLS || '').split(/\s*;\s*|\s*,\s*/);
+var RETRY_TIMEOUT =  parseInt(process.env.RETRY_TIMEOUT) || 2000;
+var CART_TIMEOUT = parseInt(process.env.CART_TIMEOUT) || 60000;
+
+var serviceClient = serviceSDK({ discoveryServers: DISCOVERY_SERVICE_URLS });
 
 var server = express();
 server.use(bodyParser.json());
@@ -21,10 +24,6 @@ server.use(function(req, res, next){
   next();
 });
 
-var CATALOG_SERVICE_FULL_URL = process.env.CATALOG_SERVICE_URL + '/products/_all_docs?include_docs=true';
-var RETRY_TIMEOUT =  parseInt(process.env.RETRY_TIMEOUT) || 2000;
-var CART_TIMEOUT = parseInt(process.env.CART_TIMEOUT) || 60000;
-
 var catalogItems = [];
 var catalogServiceBreaker = new CircuitBreaker({
   timeoutDuration: 1000,
@@ -32,7 +31,7 @@ var catalogServiceBreaker = new CircuitBreaker({
   errorThreshold: 50
 });
 
-retryReplicate(CATALOG_SERVICE_FULL_URL);
+retryReplicate();
 
 server.get('/healthcheck', function(req, res){
   res.send({ message: 'OK', version: app.version});
@@ -111,10 +110,10 @@ server.post('/cart/:key?', function(req, res){
 
 server.get('/replicate', function(req, res){
   var command = function(success, failed) {
-   replicate(CATALOG_SERVICE_FULL_URL, function(result){
-    res.send({message: result.body.length + ' items replicated'});
-    success();
-   }, failed)
+    replicate(function(result){
+       res.send({message: result.body.rows.length + ' items replicated'});
+       success();
+    }, failed);
   };
 
   catalogServiceBreaker.run(command, function() {    
@@ -131,15 +130,10 @@ server.listen(process.env.SERVICE_PORT, function(){
   console.log('Listen on ' + process.env.SERVICE_PORT);
 });
 
-function replicate(path, success, failed){
-  request
-    .get(path)
-    .set('Connection','keep-alive')
-    .accept('json')
-    .timeout(2000)
-    .q()
-    .then(function(result){
-      catalogItems = result.body.rows.map(function(itm){
+function replicate(success, failed) {
+  serviceClient.get('couchdb', '/products/_all_docs?include_docs=true')
+    .then(function (result) {
+      catalogItems = result.body.rows.map(function (itm) {
         itm.doc.id = itm.doc._id;
         delete itm.doc._id;
         delete itm.doc._rev;
@@ -149,17 +143,14 @@ function replicate(path, success, failed){
       console.log(catalogItems);
       return result;
     })
-    .then(success)
-    .fail(function(error){
-      console.log(path + ' - Replication error');
-      failed();
+    .then(success, function (error) {
+      console.log('Replication error: ' + error);
+      if (typeof failed === 'function') failed(error);
     });
 }
 
-function retryReplicate(CATALOG_SERVICE_FULL_URL){
-  replicate(CATALOG_SERVICE_FULL_URL, null, function(){
-    setTimeout(function(){
-      retryReplicate(CATALOG_SERVICE_FULL_URL);
-    }, RETRY_TIMEOUT);  
-  });  
+function retryReplicate() {
+  replicate(null, function () {
+    setTimeout(retryReplicate, RETRY_TIMEOUT);  
+  });
 }

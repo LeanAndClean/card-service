@@ -1,20 +1,16 @@
 {
   "name": "cart-service",
-  "private": "true",
-  "version": "0.0.6",
+  "version": "0.0.7",
+  "private": true,
   "description": "",
   "dependencies": {
     "body-parser": "^1.12.4",
     "circuit-breaker-js": "0.0.1",
     "express": "^4.12.4",
-    "extend": "^2.0.1",
     "lc-sdk-node.js": "0.0.1",
     "lodash": "^3.9.3",
     "memory-cache": "^0.1.4",
-    "node-uuid": "^1.4.3",
-    "q": "^1.4.1",
-    "q-superagent": "^1.0.1",
-    "superagent": "^1.2.0"
+    "node-uuid": "^1.4.3"
   },
   "scripts": {
     "start": "node serve.js"

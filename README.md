@@ -20,20 +20,19 @@ export DISCOVERY_SERVICE_URLS=http://46.101.138.192:8500,http://46.101.191.124:8
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.7
-docker push 46.101.191.124:5000/cart-service:0.0.7
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.8
+docker push 46.101.191.124:5000/cart-service:0.0.8
 ```
 
 ##Deploy via Shipyard
 
-###OSX/Linux
 ```
 curl -X POST \
 -H 'Content-Type: application/json' \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.7",
+  "name":"46.101.191.124:5000/cart-service:0.0.8",
   "cpus":0.1,
   "memory":64,
   "environment":{
@@ -93,6 +92,15 @@ http://localhost:5008/cart/mycart1 \
     "id": "725dfb991d1f699103311e2b0e073703"
   }]
 '
+```
+
+####Set cart done
+
+```
+curl -X POST \
+-H 'Content-Type: application/json' \
+http://localhost:5008/cart/mycart1/close \
+-d '{}'
 ```
 
 ###Replication

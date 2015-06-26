@@ -25,6 +25,8 @@ server.use(function(req, res, next){
 });
 
 var catalogItems = [];
+var contractItems = [];
+
 var catalogServiceBreaker = new CircuitBreaker({
   timeoutDuration: 1000,
   volumeThreshold: 1,
@@ -61,7 +63,7 @@ server.get('/cart/:key?', function(req, res){
     
     if(!cart.orders) cart.orders = {};
     if(!cart.orders[itm.id]) cart.orders[itm.id] = {
-      id: Infinity,
+      id: '',
       mbid: '',
       artist: '',
       title: '',
@@ -92,6 +94,13 @@ server.get('/cart/:key?', function(req, res){
   }
 
   res.send(cart);  
+});
+
+
+server.post('/cart/:key/close', function(req,res){
+  var cartId = req.params.key;
+  cache.del(cartId);
+  res.send({id: cartId, message: 'accepted'});
 });
 
 server.post('/cart/:key?', function(req, res){

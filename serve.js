@@ -3,6 +3,8 @@
 var express         = require('express');
 var app             = require('./package.json');
 var bodyParser      = require('body-parser');
+var rateLimit       = require('express-rate-limit');
+var responseTime    = require('response-time');
 var uuid            = require('node-uuid');
 var cache           = require('memory-cache');
 var CircuitBreaker  = require('circuit-breaker-js');
@@ -12,10 +14,22 @@ var serviceSDK      = require('lc-sdk-node.js');
 var DISCOVERY_SERVICE_URLS = (process.env.DISCOVERY_SERVICE_URLS || '').split(/\s*;\s*|\s*,\s*/);
 var RETRY_TIMEOUT =  parseInt(process.env.RETRY_TIMEOUT) || 2000;
 var CART_TIMEOUT = parseInt(process.env.CART_TIMEOUT) || 60000;
+var MAX_REQUEST_PER_SECOND = parseInt(process.env.MAX_REQUEST_PER_SECOND) || 5;
+var REQUEST_THROTTLE_MS = parseInt(process.env.REQUEST_THROTTLE_MS) || 10;
 
 var serviceClient = serviceSDK({ discoveryServers: DISCOVERY_SERVICE_URLS });
 
 var server = express();
+server.use(responseTime(function(req, res, time){
+  console.log('LOG: ' + req.url + ',' + res.statusCode + ',' + time);
+}));
+server.enable('trust proxy');
+server.use(rateLimit({
+        windowMs: 1000,
+        delayMs: REQUEST_THROTTLE_MS,
+        max: MAX_REQUEST_PER_SECOND,
+        global: true
+}));
 server.use(bodyParser.json());
 server.use(function(req, res, next){
   res.header('Access-Control-Allow-Origin', '*');

@@ -7,6 +7,8 @@ export SERVICE_PORT=5008
 export CART_TIMEOUT=60000
 export RETRY_TIMEOUT=5000
 export DISCOVERY_SERVICE_URLS=http://46.101.138.192:8500,http://46.101.191.124:8500
+export MAX_REQUEST_PER_SECOND=2
+export REQUEST_THROTTLE_MS=10
 ```
 
 ##Build
@@ -20,8 +22,8 @@ export DISCOVERY_SERVICE_URLS=http://46.101.138.192:8500,http://46.101.191.124:8
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.8
-docker push 46.101.191.124:5000/cart-service:0.0.8
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.9
+docker push 46.101.191.124:5000/cart-service:0.0.9
 ```
 
 ##Deploy via Shipyard
@@ -32,15 +34,17 @@ curl -X POST \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.8",
+  "name":"46.101.191.124:5000/cart-service:0.0.9",
   "cpus":0.1,
   "memory":64,
   "environment":{
-    "SERVICE_CHECK_SCRIPT":"curl -s http://46.101.191.124:5008/healthcheck",
+    "SERVICE_CHECK_SCRIPT":"curl -s http://46.101.191.124:5020/healthcheck",
     "DISCOVERY_SERVICE_URLS":"http://46.101.138.192:8500,http://46.101.191.124:8500",
-    "SERVICE_PORT":"5008",
+    "SERVICE_PORT":"5020",
     "CART_TIMEOUT":"3600000",
     "RETRY_TIMEOUT":"5000",
+    "MAX_REQUEST_PER_SECOND":"5",
+    "REQUEST_THROTTLE_MS":"10",
     "LOG":"true"
   },
   "hostname":"",
@@ -53,8 +57,8 @@ http://46.101.191.124:8080/api/containers?pull=true \
     {  
        "proto":"tcp",
        "host_ip":null,
-       "port":5008,
-       "container_port":5008
+       "port":5020,
+       "container_port":5020
     }
   ],
   "labels":[],

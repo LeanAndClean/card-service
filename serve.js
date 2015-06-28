@@ -21,10 +21,16 @@ var SHUTDOWN_TIMEOUT_MS = parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || 10000;
 var serviceClient = serviceSDK({ discoveryServers: DISCOVERY_SERVICE_URLS });
 
 var app = express();
+app.enable('trust proxy');
 app.use(responseTime(function(req, res, time){
   console.log('LOG: ' + req.method + ',' + req.url + ',' + res.statusCode + ',' + time);
 }));
-app.enable('trust proxy');
+app.use(function(req, res, next){
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 app.use(rateLimit({
         windowMs: 60000,
         delayMs: REQUEST_THROTTLE_MS,
@@ -32,12 +38,6 @@ app.use(rateLimit({
         global: true
 }));
 app.use(bodyParser.json());
-app.use(function(req, res, next){
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
 
 var catalogItems = [];
 var contractItems = [];

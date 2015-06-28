@@ -23,8 +23,8 @@ export SHUTDOWN_TIMEOUT_MS=10000
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.15
-docker push 46.101.191.124:5000/cart-service:0.0.15
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.18
+docker push 46.101.191.124:5000/cart-service:0.0.18
 ```
 
 ##Deploy via Shipyard
@@ -35,17 +35,17 @@ curl -X POST \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.15",
+  "name":"46.101.191.124:5000/cart-service:0.0.18",
   "cpus":0.1,
-  "memory":32,
+  "memory":64,
   "environment":{
     "SERVICE_CHECK_SCRIPT":"curl -s http://46.101.191.124:5020/healthcheck",
     "DISCOVERY_SERVICE_URLS":"http://46.101.138.192:8500,http://46.101.191.124:8500",
     "SERVICE_PORT":"5020",
     "CART_TIMEOUT":"3600000",
     "RETRY_TIMEOUT":"5000",
-    "MAX_REQUEST_PER_MINUTE":"75",
-    "REQUEST_THROTTLE_MS":"10",
+    "MAX_REQUEST_PER_MINUTE":"65",
+    "REQUEST_THROTTLE_MS":"1",
     "SHUTDOWN_TIMEOUT_MS":"10000",
     "LOG":"true"
   },
@@ -63,7 +63,7 @@ http://46.101.191.124:8080/api/containers?pull=true \
        "container_port":5020
     }
   ],
-  "labels":[],
+  "labels":["docker"],
   "publish":false,
   "privileged":false,
   "restart_policy":{  

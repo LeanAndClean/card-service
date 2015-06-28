@@ -23,8 +23,8 @@ export SHUTDOWN_TIMEOUT_MS=10000
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.14
-docker push 46.101.191.124:5000/cart-service:0.0.14
+docker tag cart-service 46.101.191.124:5000/cart-service:0.0.15
+docker push 46.101.191.124:5000/cart-service:0.0.15
 ```
 
 ##Deploy via Shipyard
@@ -35,7 +35,7 @@ curl -X POST \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
 http://46.101.191.124:8080/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.14",
+  "name":"46.101.191.124:5000/cart-service:0.0.15",
   "cpus":0.1,
   "memory":32,
   "environment":{
@@ -105,8 +105,7 @@ http://localhost:5008/cart/mycart1 \
 ```
 curl -X POST \
 -H 'Content-Type: application/json' \
-http://localhost:5008/cart/mycart1/close \
--d '{}'
+http://localhost:5008/cart/mycart1/close
 ```
 
 ###Replication

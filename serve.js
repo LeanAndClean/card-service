@@ -22,7 +22,7 @@ var serviceClient = serviceSDK({ discoveryServers: DISCOVERY_SERVICE_URLS });
 
 var app = express();
 app.use(responseTime(function(req, res, time){
-  console.log('LOG: ' + req.url + ',' + res.statusCode + ',' + time);
+  console.log('LOG: ' + req.method + ',' + req.url + ',' + res.statusCode + ',' + time);
 }));
 app.enable('trust proxy');
 app.use(rateLimit({
@@ -51,15 +51,30 @@ var catalogServiceBreaker = new CircuitBreaker({
 retryReplicate();
 
 app.get('/cart/:key', function(req, res){
-  if(!req.params.key) return res.send(400, {message: 'cart id is missing'});
+  if(!req.params.key) return res.status(400).send({message: 'cart id is missing'});
 
   var cart = cache.get(req.params.key);
-  if(!cart) return res.send(404, {message: 'cart not found'});
+  if(!cart) return res.status(400).send({message: 'cart not found'});
+
+  res.send(cart);  
+});
+app.post('/cart/:key/close', function(req,res){
+  var cartId = req.params.key;
+
+  if(!cartId) return res.status(400).send({message: 'cart id is missing'});
+
+  cache.del(cartId);
+  res.status(202).send({id: cartId, message: 'accepted'});
+});
+app.post('/cart/:key?', function(req, res){
+  var payload = {
+    cartId: req.params.key || uuid.v4(),
+    orders: req.body || [],
+    timestamp: Date.now(),
+    datetime: new Date()
+  };
   
-  cart.total = 0;
-  cart.datetime = new Date();
-  
-  cart.orders = cart.orders.map(function(itm){
+  payload.orders = payload.orders.map(function(itm){
     
     var catalogItem = _.find(catalogItems, {id: itm.id});
     _.assign(itm, catalogItem);
@@ -69,7 +84,7 @@ app.get('/cart/:key', function(req, res){
     return itm;
   });
 
-  cart.cart = cart.orders.reduce(function(cart, itm){
+  payload.cart = payload.orders.reduce(function(cart, itm){
     
     if(!cart.orders) cart.orders = {};
     if(!cart.orders[itm.id]) cart.orders[itm.id] = {
@@ -99,32 +114,12 @@ app.get('/cart/:key', function(req, res){
     total: 0
   });
 
-  for(var idx in cart.cart.orders){
-    cart.cart.total += cart.cart.orders[idx].total || 0;
+  for(var idx in payload.cart.orders){
+    payload.cart.total += payload.cart.orders[idx].total || 0;
   }
 
-  res.send(200, cart);  
-});
-app.post('/cart/:key/close', function(req,res){
-  var cartId = req.params.key;
-
-  if(!cartId) return res.send(400, {message: 'cart id is missing'});
-
-  cache.del(cartId);
-  res.send(201, {id: cartId, message: 'accepted'});
-});
-app.post('/cart/:key?', function(req, res){
-  var cartId = req.params.key || uuid.v4();
-  var orders  = req.body || [];
-
-  var payload = {
-    orders: orders,
-    timestamp: Date.now(),
-    datetime: new Date()
-  };
-
-  cache.put(cartId, payload, CART_TIMEOUT);
-  res.send(201, {id: cartId, message: 'accepted'});
+  cache.put(payload.cartId, payload, CART_TIMEOUT);
+  res.status(201).send({cart: payload});
 });
 
 app.get('/healthcheck', function(req, res){
@@ -139,7 +134,7 @@ app.get('/replicate', function(req, res){
   };
 
   catalogServiceBreaker.run(command, function() {    
-    res.send({ message: 'Replication error' });
+    res.status(500).send({ message: 'Replication error' });
   });
 });
 app.get('/error', function(req, res){

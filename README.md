@@ -1,15 +1,23 @@
 #Cart Service
 
-##Configuration parameters
+##Service configuration
 
 ```
-export SERVICE_PORT=5008
+export SERVICE_PORT=5020
 export CART_TIMEOUT=60000
 export RETRY_TIMEOUT=5000
 export DISCOVERY_SERVICE_URLS=http://46.101.138.192:8500,http://46.101.191.124:8500
-export MAX_REQUEST_PER_MINUTE=5
-export REQUEST_THROTTLE_MS=10
+export MAX_REQUEST_PER_MINUTE=65
+export REQUEST_THROTTLE_MS=1
 export SHUTDOWN_TIMEOUT_MS=10000
+```
+
+##Deploy configuration
+
+```
+export SERVICE_VERSION=0.0.14
+export PUBLISH_SERVICE=<ip>:<port>
+export DEPLOY_SERVICE=<ip>:<port>
 ```
 
 ##Build
@@ -18,13 +26,13 @@ export SHUTDOWN_TIMEOUT_MS=10000
 
 ##Run locally
 
-`docker run -t -i -p 5008:5008 cart-service`
+`docker run -t -i -p $SERVICE_PORT:$SERVICE_PORT cart-service`
 
 ##Release into private registry
 
 ```
-docker tag cart-service 46.101.191.124:5000/cart-service:0.0.18
-docker push 46.101.191.124:5000/cart-service:0.0.18
+docker tag cart-service $PUBLISH_SERVICE/cart-service:$SERVICE_VERSION
+docker push $PUBLISH_SERVICE/cart-service:$SERVICE_VERSION
 ```
 
 ##Deploy via Shipyard
@@ -33,20 +41,20 @@ docker push 46.101.191.124:5000/cart-service:0.0.18
 curl -X POST \
 -H 'Content-Type: application/json' \
 -H 'X-Service-Key: pdE4.JVg43HyxCEMWvsFvu6bdFV7LwA7YPii' \
-http://46.101.191.124:8080/api/containers?pull=true \
+http://$DEPLOY_SERVICE/api/containers?pull=true \
 -d '{  
-  "name":"46.101.191.124:5000/cart-service:0.0.18",
+  "name":"'$PUBLISH_SERVICE'/cart-service:'$SERVICE_VERSION'",
   "cpus":0.1,
-  "memory":64,
+  "memory":32,
   "environment":{
-    "SERVICE_CHECK_SCRIPT":"curl -s http://46.101.191.124:5020/healthcheck",
-    "DISCOVERY_SERVICE_URLS":"http://46.101.138.192:8500,http://46.101.191.124:8500",
-    "SERVICE_PORT":"5020",
-    "CART_TIMEOUT":"3600000",
-    "RETRY_TIMEOUT":"5000",
-    "MAX_REQUEST_PER_MINUTE":"65",
-    "REQUEST_THROTTLE_MS":"1",
-    "SHUTDOWN_TIMEOUT_MS":"10000",
+    "SERVICE_CHECK_SCRIPT":"curl -s http://$SERVICE_CONTAINER_IP:$SERVICE_CONTAINER_PORT/healthcheck",
+    "DISCOVERY_SERVICE_URLS":"'$DISCOVERY_SERVICE_URLS'",
+    "SERVICE_PORT":"'$SERVICE_PORT'",
+    "CART_TIMEOUT":"'$CART_TIMEOUT'",
+    "RETRY_TIMEOUT":"'$RETRY_TIMEOUT'",
+    "MAX_REQUEST_PER_MINUTE":"'$MAX_REQUEST_PER_MINUTE'",
+    "REQUEST_THROTTLE_MS":"'$REQUEST_THROTTLE_MS'",
+    "SHUTDOWN_TIMEOUT_MS":"'$SHUTDOWN_TIMEOUT_MS'",
     "LOG":"true"
   },
   "hostname":"",
@@ -59,11 +67,11 @@ http://46.101.191.124:8080/api/containers?pull=true \
     {  
        "proto":"tcp",
        "host_ip":null,
-       "port":5020,
-       "container_port":5020
+       "port":'$SERVICE_PORT',
+       "container_port":'$SERVICE_PORT'
     }
   ],
-  "labels":["docker"],
+  "labels":[],
   "publish":false,
   "privileged":false,
   "restart_policy":{  
@@ -81,7 +89,7 @@ http://46.101.191.124:8080/api/containers?pull=true \
 ```
 curl -X GET \
 -H 'Content-Type: application/json' \
-http://localhost:5008/cart/mycart1
+http://localhost:$SERVICE_PORT/cart/mycart1
 ```
 
 ####Add cart items
@@ -89,7 +97,7 @@ http://localhost:5008/cart/mycart1
 ```
 curl -X POST \
 -H 'Content-Type: application/json' \
-http://localhost:5008/cart/mycart1 \
+http://localhost:$SERVICE_PORT/cart/mycart1 \
 -d '
   [{
     "id": "725dfb991d1f699103311e2b0e07280c"
@@ -105,7 +113,7 @@ http://localhost:5008/cart/mycart1 \
 ```
 curl -X POST \
 -H 'Content-Type: application/json' \
-http://localhost:5008/cart/mycart1/close
+http://localhost:$SERVICE_PORT/cart/mycart1/close
 ```
 
 ###Replication
@@ -113,7 +121,7 @@ http://localhost:5008/cart/mycart1/close
 ```
 curl -X GET \
 -H 'Content-Type: application/json' \
-http://localhost:5008/replicate
+http://localhost:$SERVICE_PORT/replicate
 ```
 
 ###HealthCheck
@@ -121,5 +129,5 @@ http://localhost:5008/replicate
 ```
 curl -X GET \
 -H 'Content-Type: application/json' \
-http://localhost:5008/healthcheck
+http://localhost:$SERVICE_PORT/healthcheck
 ```

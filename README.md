@@ -1,6 +1,6 @@
 #Cart Service
 
-##Service configuration
+##Configuration
 
 ```
 export SERVICE_PORT=5020
@@ -25,7 +25,7 @@ export SERVICE_VERSION=0.0.14
 ##Release into private registry
 
 ```
-docker tag cart-service $PUBLISH_SERVICE/cart-service:$SERVICE_VERSION
+docker tag cart-service:latest $PUBLISH_SERVICE/cart-service:$SERVICE_VERSION
 docker push $PUBLISH_SERVICE/cart-service:$SERVICE_VERSION
 ```
 
